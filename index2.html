@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Thời khóa biểu</title>
+</head>
+<body>
+    <table id="timetable">
+        <!-- Thêm các hàng và cột vào đây -->
+    </table>
+
+    <script>
+        // Lấy danh sách các hàng trong bảng
+        const rows = document.querySelectorAll('#timetable tbody tr');
+
+        // Lọc các hàng dựa trên giá trị của cột WW
+        const filteredRows = Array.from(rows).filter(row => {
+            const wwCell = row.querySelector('td:nth-child(1)'); // Thay đổi số cột tương ứng
+            return wwCell.textContent.includes('WW 10'); // Thay đổi điều kiện lọc
+        });
+
+        // Hiển thị chỉ các hàng đã lọc
+        filteredRows.forEach(row => {
+            row.style.display = 'table-row';
+        });
+    </script>
+</body>
+</html>

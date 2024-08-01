@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Inventory</title>
+    <style>
+        .status-available {
+            background-color: rgb(118, 120, 118);
+        }
+        .status-pending {
+            background-color: lightyellow;
+        }
+        .status-done {
+            background-color: rgb(33, 241, 10);
+        }
+        textarea {
+            width: 100%;
+            height: 50px; /* Increase height for better visibility */
+        }
+        th {
+            background-color: lightblue; /* Set the background color for header cells */
+            color: white; /* Set the text color for header cells */
+        }
+    </style>
+</head>
+<body>
+    <h1>Tool Inventory</h1>
+    <button onclick="addRow()">Add Row</button>
+    <table border="1" id="toolTable">
+        <tr>
+            <th>WW</th>
+            <th>Tool Name</th>
+            <th>Quantity</th>
+            <th>Status</th>
+            <th>Image</th>
+            <th>Local</th>
+            <th>Note</th>
+        </tr>
+        <tr>
+            <td>
+                <select>
+                    ${Array.from({ length: 53 * 7 }, (_, i) => {
+                        const week = Math.floor(i / 7) + 1;
+                        const subWeek = i % 7;
+                        return `<option value="WW${week}.${subWeek}">WW${week}.${subWeek}</option>`;
+                    }).join('')}
+                </select>
+            </td>
+            <td><input type="text" placeholder="Tool Name"></td>
+            <td>
+                <select>
+                    ${Array.from({ length: 100 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('')}
+                </select>
+            </td>
+            <td>
+                <select onchange="updateStatus(this)">
+                    <option value="Available">Available</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Done">Done</option>
+                </select>
+            </td>
+            <td><input type="file" accept="image/*" onchange="previewImage(this)"></td>
+            <td><textarea rows="2" cols="20"></textarea></td>
+            <td><textarea rows="2" cols="20"></textarea></td>
+        </tr>
+    </table>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script>
+        function updateStatus(select) {
+            const status = select.value;
+            const cell = select.parentElement;
+            cell.className = ''; // Reset class
+            if (status === 'Available') {
+                cell.classList.add('status-available');
+            } else if (status === 'Pending') {
+                cell.classList.add('status-pending');
+            } else if (status === 'Done') {
+                cell.classList.add('status-done');
+            }
+        }
+
+        function previewImage(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.width = 100; // Adjust the size as needed
+                    input.parentElement.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function addRow() {
+            const table = document.getElementById('toolTable');
+            const newRow = table.insertRow();
+            newRow.innerHTML = `
+                <td>
+                    <select>
+                        ${Array.from({ length: 53 * 7 }, (_, i) => {
+                            const week = Math.floor(i / 7) + 1;
+                            const subWeek = i % 7;
+                            return `<option value="WW${week}.${subWeek}">WW${week}.${subWeek}</option>`;
+                        }).join('')}
+                    </select>
+                </td>
+                <td><input type="text" placeholder="Tool Name"></td>
+                <td>
+                    <select>
+                        ${Array.from({ length: 100 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('')}
+                    </select>
+                </td>
+                <td>
+                    <select onchange="updateStatus(this)">
+                        <option value="Available">Available</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Done">Done</option>
+                    </select>
+                </td>
+                <td><input type="file" accept="image/*" onchange="previewImage(this)"></td>
+                <td><textarea rows="2" cols="20"></textarea></td>
+                <td><textarea rows="2" cols="20"></textarea></td>
+            `;
+        }
+
+        function downloadExcel() {
+            const table = document.getElementById('toolTable');
+            const rows = Array.from(table.rows).map(row => Array.from(row.cells).map(cell => cell.innerText || cell.querySelector('select, input, textarea')?.value || ''));
+            const worksheet = XLSX.utils.aoa_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Tool Inventory');
+            XLSX.writeFile(workbook, 'tool_inventory.xlsx');
+        }
+
+        function checkDownload() {
+            const startDate = localStorage.getItem('startDate');
+            const now = new Date().getTime();
+            const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+
+            if (!startDate) {
+                localStorage.setItem('startDate', now);
+            } else if (now - startDate >= oneMonth) {
+                downloadExcel();
+                localStorage.removeItem('startDate'); // Reset the start date after download
+            }
+        }
+
+        checkDownload();
+    </script>
+</body>
+</html>
